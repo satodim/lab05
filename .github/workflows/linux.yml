@@ -1,42 +1,52 @@
-name: Code Coverage
+name: CMake Build and Test with Coverage
 
 on:
   push:
-    branches: [ master, main ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ master, main ]
+    branches: [ main, master ]
 
 jobs:
-  coverage:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Загружаем ваш код
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          submodules: 'recursive'
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
 
-      # 2. Устанавливаем lcov
-      - name: Install lcov
-        run: sudo apt-get install -y lcov
+    - name: Configure CMake
+      run: |
+        cmake -H. -B_build \
+          -DBUILD_TESTS=ON \
+          -DCMAKE_CXX_FLAGS="--coverage -O0 -Wno-error -Wno-maybe-uninitialized" \
+          -DCMAKE_EXE_LINKER_FLAGS="--coverage"
 
-      # 3. Конфигурируем CMake: Включаем тесты и покрытие
-      - name: Configure
-        run: cmake -B build -DBUILD_TESTS=ON -DCOVERAGE=ON -DCMAKE_CXX_FLAGS="-Wno-error"
+    - name: Build
+      run: cmake --build _build
 
-      # 4. Собираем проект и тесты
-      - name: Build
-        run: cmake --build build
+    - name: Run tests
+      working-directory: _build
+      run: ctest --output-on-failure
 
-      # 5. Запускаем тесты для генерации .gcda файлов
-      - name: Run tests
-        working-directory: build
-        run: ctest --output-on-failure
+    - name: Generate coverage with gcov
+      working-directory: _build
+      run: |
+        for file in $(find . -name "*.gcda" | grep banking); do
+          gcov -o $(dirname $file) $(basename $file .gcda).gcda 2>/dev/null || true
+        done
 
-      # 6. Генерируем итоговый .info файл с помощью lcov
-      - name: Generate coverage report
-        run: |
-          lcov --capture --directory build --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' '*/third-party/*' '*/tests/*' --output-file coverage.info
-          lcov --list coverage.info
+        echo "=== Coverage Report ==="
+        for f in *.cpp.gcov; do
+          if [ -f "$f" ]; then
+            echo ""
+            echo "--- $f ---"
+            grep "Lines executed" "$f" || echo "No coverage data"
+          fi
+        done
+
+    - name: Upload coverage artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-reports
+        path: _build/*.gcov
