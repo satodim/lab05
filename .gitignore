@@ -1,4 +1,14 @@
-*build*/
-*install*/
+_build/
+build/
+cmake-build-*/
+
+*.gcda
+*.gcno
+*.gcov
+coverage.info
+coverage_report/
+
+*~
 *.swp
-.idea/
+*.tmp
+artifacts/
