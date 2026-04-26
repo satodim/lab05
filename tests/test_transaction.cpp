@@ -10,7 +10,6 @@ using ::testing::NiceMock;
 class TransactionTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        // Используем NiceMock для подавления предупреждений
         from = new NiceMock<MockAccount>(1, 500);
         to = new NiceMock<MockAccount>(2, 100);
         tx.set_fee(10);
@@ -21,13 +20,11 @@ protected:
         delete to;
     }
     
-    // Указатели на базовый класс MockAccount (не на NiceMock)
     MockAccount* from;
     MockAccount* to;
     Transaction tx;
 };
 
-// ============ Проверки исключений ============
 
 TEST_F(TransactionTest, ThrowsOnSameAccount) {
     EXPECT_THROW(tx.Make(*from, *from, 100), std::logic_error);
@@ -46,7 +43,6 @@ TEST_F(TransactionTest, ReturnsFalseWhenFeeTooHigh) {
     EXPECT_FALSE(tx.Make(*from, *to, 300));
 }
 
-// ============ Успешные операции ============
 
 TEST_F(TransactionTest, ExecutesSuccessfully) {
     EXPECT_CALL(*from, Lock());
@@ -82,8 +78,6 @@ TEST_F(TransactionTest, WorksWithMinimumSum) {
     EXPECT_TRUE(tx.Make(*from, *to, 100));
 }
 
-// ============ Ошибки и откаты ============
-
 TEST_F(TransactionTest, ReturnsFalseWhenInsufficientFunds) {
     EXPECT_CALL(*from, Lock());
     EXPECT_CALL(*to, Lock());
@@ -101,7 +95,6 @@ TEST_F(TransactionTest, PropagatesLockException) {
     EXPECT_THROW(tx.Make(*from, *to, 300), std::runtime_error);
 }
 
-// ============ Базовые проверки (без моков) ============
 
 TEST(TransactionUnitTest, DefaultFeeIsOne) {
     Transaction tx;

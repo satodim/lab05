@@ -2,7 +2,6 @@
 #include <gmock/gmock.h>
 #include "Account.h"
 
-// NiceMock подавляет предупреждения о "uninteresting mock function calls"
 using ::testing::NiceMock;
 
 class MockAccount : public Account {

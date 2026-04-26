@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 #include "Account.h"
 
-// ============ Тесты Account ============
-
 TEST(AccountTest, ConstructorAndGetters) {
     Account acc(1, 100);
     EXPECT_EQ(acc.id(), 1);
@@ -12,10 +10,8 @@ TEST(AccountTest, ConstructorAndGetters) {
 TEST(AccountTest, ChangeBalanceRequiresLock) {
     Account acc(1, 100);
     
-    // Без блокировки - ошибка
     EXPECT_THROW(acc.ChangeBalance(50), std::runtime_error);
     
-    // С блокировкой - работает
     acc.Lock();
     EXPECT_NO_THROW(acc.ChangeBalance(50));
     EXPECT_EQ(acc.GetBalance(), 150);
